@@ -17,7 +17,6 @@
     "@prisma/client": "^5.9.1",
     "@reduxjs/toolkit": "^2.1.0",
     "@vercel/analytics": "^1.2.2",
-    "@vercel/kv": "^1.0.1",
     "@vercel/node": "^3.0.17",
     "axios": "^1.6.7",
     "base64url": "^3.0.1",

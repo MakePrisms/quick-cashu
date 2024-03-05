@@ -13,6 +13,7 @@ model User {
   pubkey    String   @unique
   username  String?  @unique
   proofs    Proof[] // Establishes a one-to-many relationship with the Proof model
+  receiving Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -29,18 +29,18 @@ async function findUserByPubkey(pubkey: string) {
     return user;
 }
 
-async function updateUser(id: number, pubkey: string, username?: string) {
+async function updateUser(pubkey: string, updates: { username?: string; receiving?: boolean }) {
     const user = await prisma.user.update({
         where: {
-            id,
+            pubkey,
         },
         data: {
-            pubkey,
-            username,
+            ...updates
         },
     });
     return user;
 }
+
 
 async function deleteUser(id: number) {
     const user = await prisma.user.delete({

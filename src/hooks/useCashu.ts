@@ -6,7 +6,6 @@ import { setError, setSending, setSuccess, setReceiving, resetStatus } from "@/r
 import { useToast } from './useToast';
 import { getAmountFromInvoice } from "@/utils/bolt11";
 import { CashuWallet, CashuMint, SendResponse, PayLnInvoiceResponse } from '@cashu/cashu-ts';
-import { createClient } from '@vercel/kv';
 import { getNeededProofs, updateStoredProofs } from '@/utils/cashu';
 
 export const useCashu = () => {
@@ -16,6 +15,7 @@ export const useCashu = () => {
     
     const dispatch = useDispatch();
     const { addToast } = useToast();
+    const activityStateStatus = useSelector((state: any) => state.activity.status)
 
     const mint = new CashuMint(process.env.NEXT_PUBLIC_CASHU_MINT_URL!);
     const wallet = new CashuWallet(mint);
@@ -123,33 +123,6 @@ export const useCashu = () => {
         }
     }
 
-    const checkIsReceiving = async (pubkey: string) => {
-        const response = await axios.get(`/api/kv/${pubkey}`);
-
-        if (response && response.data && response.data.value) { 
-            const status = response.data.value;
-            receivingStatus !== status && setReceivingStatus(status);           
-            switch (status) {
-                case 'receiving':
-                    dispatch(setReceiving("Receiving..."));
-                    break;
-                case 'success':
-                    await axios.post(`/api/kv/${pubkey}`, { value: 'none' });
-                    break;
-                case 'failed':
-                    await axios.post(`/api/kv/${pubkey}`, { value: 'none' });
-                    break;
-                case 'none':
-                    if (receivingStatus === 'receiving') {
-                        dispatch(resetStatus());
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
     const checkProofsValid = async () => {
         const localProofs = getProofs();
 
@@ -192,12 +165,16 @@ export const useCashu = () => {
             return;
         }
 
-        // first check if we are already receiving
-        await checkIsReceiving(pubkey);
-
         try {
-            const proofsResponse = await axios.get(`/api/proofs/${pubkey}`);
-            const proofsFromDb = proofsResponse.data;
+            const pollingResponse = await axios.get(`/api/proofs/${pubkey}`);
+
+            const isReceiving = pollingResponse.data?.receiving
+
+            if (isReceiving && activityStateStatus !== "receiving") {
+                dispatch(setReceiving("Receiving..."));
+            }
+
+            const proofsFromDb = pollingResponse.data;
             const formattedProofs = proofsFromDb.map((proof: any) => ({
                 C: proof.C,
                 amount: proof.amount,
