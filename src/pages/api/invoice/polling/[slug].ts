@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
                 await updateUser(pubkey, { receiving: false });
 
-                res.status(200).send({ success: true, message: 'Payment confirmed and proofs created.' });
+                res.status(200).send({ success: true, message: 'Payment confirmed and proofs created.', user: { receiving: user.receiving } });
                 return;
             } catch (e) {
                 if (e instanceof Error && e.message.includes("not paid")){
