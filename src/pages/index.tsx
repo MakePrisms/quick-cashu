@@ -33,6 +33,33 @@ export default function Home() {
       }
    }, [dispatch]);
 
+   useEffect(() => {
+      const checkProofs = async () => {
+         const proofs: Proof[] = JSON.parse(window.localStorage.getItem('proofs') || '[]');
+         if (!proofs.length) return;
+         const unspendable = await wallet.checkProofsSpent(proofs);
+         console.log('unspendable', unspendable);
+         const spendable = proofs.filter(p => !unspendable.some(u => u.secret === p.secret));
+         console.log(`## Removing ${unspendable.length} unspendable proofs`, unspendable);
+         window.localStorage.setItem('proofs', JSON.stringify(spendable));
+      };
+
+      const checkMint = () => {
+         const oldMint = localStorage.getItem('mint');
+         console.log('oldMint', oldMint);
+         const currentMint = process.env.NEXT_PUBLIC_CASHU_MINT_URL;
+         if (!currentMint) throw new Error('Set mint url in .env file');
+         if (!oldMint || oldMint !== currentMint) {
+            // reset the proofs because from old mint
+            window.localStorage.removeItem('proofs');
+            window.localStorage.setItem('mint', currentMint);
+         }
+      };
+
+      checkMint();
+      checkProofs();
+   }, []);
+
    const mint = new CashuMint(process.env.NEXT_PUBLIC_CASHU_MINT_URL!);
 
    const wallet = new CashuWallet(mint);
